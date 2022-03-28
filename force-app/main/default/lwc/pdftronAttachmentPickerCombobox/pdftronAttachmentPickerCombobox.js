@@ -21,7 +21,14 @@ export default class PdftronAttachmentPickerCombobox extends LightningElement {
   @track attachments = []
   @wire(CurrentPageReference) pageRef
 
+  hasRecord;
+
   renderedCallback () {
+    this.hasRecord = this.recordId ? true : false;
+    if(!this.recordId) {
+      this.loadFinished = true;
+      return
+    }
     if (!this.documentsRetrieved) {
       getAttachments({ recordId: this.recordId })
         .then(data => {
@@ -146,21 +153,55 @@ export default class PdftronAttachmentPickerCombobox extends LightningElement {
 }
 
   refreshOnSave () {
-    this.loadFinished = false
-    getAttachments({ recordId: this.recordId })
+    
+    this.loadFinished = false;
+    if(this.recordId){
+      getAttachments({ recordId: this.recordId })
       .then(data => {
         this.attachments = data
-        this.initLookupDefaultResults()
+        this.initLookupDefaultResults(data)
+
+        if(data[0]) {
+          const lookup = this.template.querySelector('c-lookup');
+          lookup.selection = data[0]
+
+          getFileDataFromId({ Id: data[0].id })
+            .then(result => {
+              fireEvent(this.pageRef, 'blobSelected', result);
+            })
+            .catch(error => {
+              this.loadFinished = true
+
+              // TODO: handle error
+              this.errors.push({
+                message: error.body.message
+              })
+              console.error(error)
+
+              let def_message =
+                'Oops, we hit a snag. '
+
+              this.showNotification(
+                def_message,
+                error.body.message,
+                'error'
+              )
+              //lookup.selection = undefined
+          })
+        }
 
         this.error = undefined
-        this.loadFinished = true
         this.documentsRetrieved = true
+        this.loadFinished = true
       })
       .catch(error => {
         console.error(error)
         this.showNotification('Error', error, 'error')
         this.error = error
+        this.isLoaded = true
       })
+    }
+    
   }
 
   handleDownload () {

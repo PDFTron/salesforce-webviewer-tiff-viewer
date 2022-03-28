@@ -122,6 +122,24 @@ window.addEventListener('viewerLoaded', async function () {
   const annotationManager = await instance.Core.documentViewer.getAnnotationManager();
 });
 
+
+async function loadTIFF(payload){
+  var blob = payload.blob;
+  
+  await PDFNet.runWithoutCleanup(async () => {
+    var newDoc = await PDFNet.PDFDoc.create();
+    newDoc.initSecurityHandler();
+    newDoc.lock();
+
+    let bufferTiff = await blob.arrayBuffer();
+    const tiffFile = await PDFNet.Filter.createFromMemory(bufferTiff);
+    await PDFNet.Convert.fromTiff(newDoc, tiffFile);
+    const buffer = await newDoc.saveMemoryBuffer(PDFNet.SDFDoc.SaveOptions.e_linearized);
+    newDoc.unlock();
+    instance.loadDocument(newDoc);
+  });
+}
+
 window.addEventListener("message", receiveMessage, false);
 
 function receiveMessage(event) {
@@ -154,6 +172,9 @@ function receiveMessage(event) {
         break;
       case 'CLOSE_DOCUMENT':
         instance.closeDocument()
+        break;
+      case 'OPEN_TIFF_BLOB':
+        loadTIFF(event.data.payload)
         break;
       default:
         break;

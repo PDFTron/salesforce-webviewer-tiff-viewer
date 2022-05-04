@@ -117,9 +117,9 @@ window.addEventListener('viewerLoaded', async function () {
   // When the viewer has loaded, this makes the necessary call to get the
   // pdftronWvInstance code to pass User Record information to this config file
   // to invoke annotManager.setCurrentUser
-  instance.Core.documentViewer.getAnnotationManager().setCurrentUser(custom.username);
+  // instance.Core.documentViewer.getAnnotationManager().setCurrentUser(custom.username);
 
-  const annotationManager = await instance.Core.documentViewer.getAnnotationManager();
+  // const annotationManager = await instance.Core.documentViewer.getAnnotationManager();
 });
 
 
